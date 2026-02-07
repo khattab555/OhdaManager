@@ -6,13 +6,16 @@ import { useTranslation } from 'react-i18next';
 export const LoanForm: React.FC = () => {
   const [employeeName, setEmployeeName] = useState('');
   const [amount, setAmount] = useState('');
-  const [installmentOption, setInstallmentOption] = useState('3');
+  const [installmentOption, setInstallmentOption] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [shake, setShake] = useState(false);
   const { addLoan, remainingFund } = useOhdaStore();
   const { t } = useTranslation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!employeeName || !amount) return;
+    if (!employeeName || !amount || isSubmitting) return;
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
@@ -25,21 +28,35 @@ export const LoanForm: React.FC = () => {
       return;
     }
 
-    let count = 1;
-    let type: 'regular' | 'salary_advance' = 'regular';
-
-    if (installmentOption === 'salary') {
-      count = 1;
-      type = 'salary_advance';
-    } else {
-      count = parseInt(installmentOption);
-      type = 'regular';
+    if (!installmentOption) {
+      setShowError(true);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      return;
     }
 
-    addLoan(employeeName, amountNum, count, type);
-    setEmployeeName('');
-    setAmount('');
-    setInstallmentOption('3');
+    setIsSubmitting(true);
+    try {
+      let count = 1;
+      let type: 'regular' | 'salary_advance' | 'flexible' = 'regular';
+
+      if (installmentOption === 'custom') {
+        count = 0; // Flexible loans don't have initial installments
+        type = 'flexible';
+      } else {
+        count = parseInt(installmentOption);
+        type = 'regular';
+      }
+
+      await addLoan(employeeName, amountNum, count, type);
+      setEmployeeName('');
+      setAmount('');
+      setInstallmentOption('');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,21 +94,41 @@ export const LoanForm: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">{t('loans.loanType')}</label>
           <select
             value={installmentOption}
-            onChange={(e) => setInstallmentOption(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            onChange={(e) => {
+                setInstallmentOption(e.target.value);
+                setShowError(false);
+            }}
+            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                showError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'
+            } ${shake ? 'animate-shake' : ''}`}
           >
+            <option value="" disabled>_____</option>
             <option value="1">{t('loans.onePayment')}</option>
             <option value="2">{t('loans.twoPayments')}</option>
             <option value="3">{t('loans.threePayments')}</option>
-            <option value="salary">{t('loans.salaryAdvance')}</option>
+            <option value="custom">{t('loans.flexiblePayments')}</option>
           </select>
         </div>
         <button
           type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium min-w-[120px]"
+          disabled={isSubmitting}
+          className={`px-6 py-2 rounded-md transition-colors flex items-center justify-center gap-2 font-medium min-w-[120px] ${
+            isSubmitting 
+              ? 'bg-blue-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
-          <PlusCircle className="w-4 h-4" />
-          {t('actions.add')}
+          {isSubmitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>جاري الإضافة...</span>
+            </>
+          ) : (
+            <>
+              <PlusCircle className="w-4 h-4" />
+              {t('actions.add')}
+            </>
+          )}
         </button>
       </form>
     </div>

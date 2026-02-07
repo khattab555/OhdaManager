@@ -10,11 +10,11 @@ export const Login: React.FC = () => {
   const { login } = useOhdaStore();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    if (login(username, password)) {
+    if (await login(username, password)) {
       navigate('/');
     } else {
       setError('اسم المستخدم أو كلمة المرور غير صحيحة');

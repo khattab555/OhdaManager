@@ -31,9 +31,9 @@ export const exportToExcel = (
       'تاريخ السلفة': new Date(loan.createdAt).toLocaleDateString('ar-AE'),
       'المبلغ الكلي': loan.amount,
       'الرصيد المتبقي': loan.remainingBalance,
-      'قيمة القسط': loan.monthlyPayment,
-      'عدد الدفعات': loan.installmentsCount || 3,
-      'نوع السلفة': loan.loanType === 'salary_advance' ? 'سلفة راتب' : 'عادية',
+      'قيمة القسط': loan.loanType === 'flexible' ? 'غير محدد' : loan.monthlyPayment,
+      'عدد الدفعات': loan.loanType === 'flexible' ? 'سداد مرن' : (loan.installmentsCount || 3),
+      'نوع السلفة': loan.loanType === 'salary_advance' ? 'سلفة راتب' : (loan.loanType === 'flexible' ? 'مرنة' : 'عادية'),
       'حالة السداد': loan.remainingBalance === 0 ? 'مسددة بالكامل' : 'قائمة'
     }));
 

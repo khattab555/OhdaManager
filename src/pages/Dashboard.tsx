@@ -4,21 +4,16 @@ import { LoanForm } from '../components/LoanForm';
 import { LoansTable } from '../components/LoansTable';
 import { Wallet, TrendingDown } from 'lucide-react';
 import { ActionMenu } from '../components/ActionMenu';
-import { UpdateFundModal } from '../components/UpdateFundModal';
 import { useTranslation } from 'react-i18next';
 
 export const Dashboard: React.FC = () => {
-  const { totalFund, remainingFund } = useOhdaStore();
-  const [isFundModalOpen, setIsFundModalOpen] = useState(false);
+  const { totalFund, remainingFund, currentUser } = useOhdaStore();
   const usedFund = totalFund - remainingFund;
   const { t } = useTranslation();
+  const isViewer = currentUser?.role === 'viewer';
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <UpdateFundModal 
-        isOpen={isFundModalOpen}
-        onClose={() => setIsFundModalOpen(false)}
-      />
 
       <header className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="text-center md:text-right">
@@ -26,7 +21,7 @@ export const Dashboard: React.FC = () => {
           <p className="text-gray-600">{t('appSubtitle')}</p>
         </div>
         
-        <ActionMenu onOpenFundModal={() => setIsFundModalOpen(true)} />
+        <ActionMenu />
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -55,7 +50,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <LoanForm />
+      {!isViewer && <LoanForm />}
       <LoansTable />
     </div>
   );

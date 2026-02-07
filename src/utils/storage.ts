@@ -6,13 +6,16 @@ const DEFAULT_DATA: AppData = {
   totalFund: 15000,
   remainingFund: 15000,
   loans: [],
+  archivedLoans: [],
 };
 
 export const loadFromLocalStorage = (): AppData => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsedData = JSON.parse(data);
+      // Merge with DEFAULT_DATA to ensure all keys exist
+      return { ...DEFAULT_DATA, ...parsedData };
     }
   } catch (error) {
     console.error('Error loading data from local storage:', error);

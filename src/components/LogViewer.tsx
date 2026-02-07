@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useOhdaStore } from '../store/useOhdaStore';
-import { User as UserIcon, LogOut, FileText } from 'lucide-react';
+import { User as UserIcon, LogOut, FileText, Camera, Hash } from 'lucide-react';
 import { Notifications } from './Notifications';
 import { useTranslation } from 'react-i18next';
 
 export const LogViewer: React.FC = () => {
-  const { logs, currentUser, logout } = useOhdaStore();
+  const { logs, currentUser, logout, updateUserAvatar } = useOhdaStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -21,15 +22,55 @@ export const LogViewer: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && currentUser) {
+        // Basic validation
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+            alert('Image size must be less than 2MB');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+             const base64 = reader.result as string;
+             await updateUserAvatar(currentUser.username, base64);
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
   if (!currentUser) return null;
 
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-2">
-           <div className="bg-blue-100 p-2 rounded-full">
-             <UserIcon className="w-5 h-5 text-blue-600" />
+           <div 
+             className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 rounded-xl cursor-pointer relative group overflow-hidden w-10 h-10 flex items-center justify-center transition-all hover:ring-2 hover:ring-blue-300 shadow-sm border border-blue-200"
+             onClick={handleAvatarClick}
+             title="Change Avatar"
+           >
+             {currentUser.avatarUrl ? (
+                <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+             ) : (
+                <Hash className="w-6 h-6 text-blue-700" />
+             )}
+             <div className="absolute inset-0 bg-black/30 hidden group-hover:flex items-center justify-center">
+                <Camera className="w-4 h-4 text-white opacity-90" />
+             </div>
            </div>
+           <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleFileChange}
+           />
            <span className="font-bold text-gray-700">{t('welcome')}, {currentUser.username}</span>
         </div>
 
