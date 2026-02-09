@@ -98,9 +98,9 @@ export const useOhdaStore = create<OhdaState>((set, get) => {
       let newAppUsers: any[] = [];
 
       // Helper for safe fetch to prevent one failure from breaking the whole app
-      const safeFetch = async (promise: Promise<any>, fallback: any, name: string) => {
+      const safeFetch = async (query: any, fallback: any, name: string) => {
           try {
-              const { data, error } = await promise;
+              const { data, error } = await query;
               if (error) {
                   // Ignore specific errors that are not critical
                   if (error.code === 'PGRST116') return fallback; // No rows found (e.g. settings)
@@ -312,8 +312,8 @@ export const useOhdaStore = create<OhdaState>((set, get) => {
       // 2. Fallback to Hardcoded Users
       // @ts-ignore
       if (USERS[username] && USERS[username] === password) {
-        const role = username === 'admin' ? 'admin' : 'user';
-        const user = { username, role };
+        const role: 'admin' | 'user' | 'viewer' = username === 'admin' ? 'admin' : 'user';
+        const user: User = { username, role };
         localStorage.setItem('currentUser', JSON.stringify(user));
         set({ currentUser: user });
         return true;
